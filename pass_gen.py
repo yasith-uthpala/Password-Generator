@@ -4,7 +4,11 @@ import random
 characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
 
 # Ask the user for password length
-length = int(input("Enter password length: "))
+try:
+    length = int(input("Enter password length: "))
+except ValueError:
+    print("Please enter numbers only!")
+    exit()
 
 password = ""
 
