@@ -69,14 +69,14 @@ def generate_password():
 
 def view_passwords():
     if not verify_master_password():
-        print("❌ Wrong master password! Access denied.\n")
+        print("Wrong master password! Access denied.\n")
         return
 
     if not os.path.exists("passwords.txt"):
         print("No passwords stored yet.\n")
         return
 
-    print("\n🔓 Stored Passwords:\n")
+    print("\n Stored Passwords:\n")
 
     with open("passwords.txt", "r") as f:
         for i, line in enumerate(f, start=1):
