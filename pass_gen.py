@@ -1,118 +1,64 @@
-import random
+"""
+Advanced Password Manager
+Entry point - run this file to start the app.
+"""
+
+from auth import setup_master_password, verify_master_password, check_lockout
+from vault import add_password, view_passwords, search_password, delete_password, edit_password
+from utils import clear_screen
 import os
-import hashlib
-from cryptography.fernet import Fernet
-
-# ---------------- MASTER PASSWORD ----------------
-
-def setup_master_password():
-    master = input("Create MASTER password: ")
-    hashed = hashlib.sha256(master.encode()).hexdigest()
-    with open("master.hash", "w") as f:
-        f.write(hashed)
-    print("Master password set successfully!\n")
 
 
-def verify_master_password():
-    entered = input("Enter MASTER password to continue: ")
-    entered_hash = hashlib.sha256(entered.encode()).hexdigest()
+def main_menu():
+    clear_screen()
+    print("╔══════════════════════════════╗")
+    print("║     🔐 Password Manager      ║")
+    print("╠══════════════════════════════╣")
+    print("║  1. Add New Password         ║")
+    print("║  2. View All Passwords       ║")
+    print("║  3. Search Password          ║")
+    print("║  4. Edit Password            ║")
+    print("║  5. Delete Password          ║")
+    print("║  6. Exit                     ║")
+    print("╚══════════════════════════════╝")
+    return input("Choose option: ").strip()
 
-    with open("master.hash", "r") as f:
-        stored_hash = f.read()
 
-    return entered_hash == stored_hash
+def main():
+    if not os.path.exists("master.hash"):
+        clear_screen()
+        print("=== First Time Setup ===")
+        setup_master_password()
 
+    clear_screen()
+    print("=== Password Manager - Login ===")
 
-# ---------------- KEY SETUP ----------------
-
-if not os.path.exists("secret.key"):
-    key = Fernet.generate_key()
-    with open("secret.key", "wb") as f:
-        f.write(key)
-else:
-    with open("secret.key", "rb") as f:
-        key = f.read()
-
-fernet = Fernet(key)
-
-# ---------------- PASSWORD FUNCTIONS ----------------
-
-def generate_password():
-    site = input("Enter site name (Gmail, Facebook): ")
-    username = input("Enter username/email: ")
-
-    characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-
-    try:
-        length = int(input("Enter password length (min 8): "))
-    except ValueError:
-        print("Numbers only!\n")
+    if not check_lockout():
         return
 
-    if length < 8:
-        print("Password too short!\n")
-        return
-
-    password = ""
-    for _ in range(length):
-        password += random.choice(characters)
-
-    print("\nGenerated Password (save this):", password)
-
-    encrypted = fernet.encrypt(password.encode()).decode()
-
-    with open("passwords.txt", "a") as f:
-        f.write(f"{site} | {username} | {encrypted}\n")
-
-    print("Password stored securely!\n")
-
-
-def view_passwords():
     if not verify_master_password():
-        print("Wrong master password! Access denied.\n")
         return
 
-    if not os.path.exists("passwords.txt"):
-        print("No passwords stored yet.\n")
-        return
+    while True:
+        choice = main_menu()
 
-    print("\n Stored Passwords:\n")
+        if choice == "1":
+            add_password()
+        elif choice == "2":
+            view_passwords()
+        elif choice == "3":
+            search_password()
+        elif choice == "4":
+            edit_password()
+        elif choice == "5":
+            delete_password()
+        elif choice == "6":
+            print("\nGoodbye! Stay secure. 👋")
+            break
+        else:
+            print("Invalid choice. Try again.\n")
+            input("Press Enter to continue...")
 
-    with open("passwords.txt", "r") as f:
-        for i, line in enumerate(f, start=1):
-            parts = line.strip().split(" | ")
-            if len(parts) != 3:
-                continue
 
-            site, username, encrypted = parts
-            password = fernet.decrypt(encrypted.encode()).decode()
-
-            print(f"{i}. Site: {site}")
-            print(f"   User: {username}")
-            print(f"   Pass: {password}\n")
-
-
-# ---------------- FIRST RUN CHECK ----------------
-
-if not os.path.exists("master.hash"):
-    setup_master_password()
-
-# ---------------- MENU ----------------
-
-while True:
-    print("==== Password Manager ====")
-    print("1. Add New Password")
-    print("2. View Stored Passwords (Protected)")
-    print("3. Exit")
-
-    choice = input("Choose option: ")
-
-    if choice == "1":
-        generate_password()
-    elif choice == "2":
-        view_passwords()
-    elif choice == "3":
-        print("Goodbye!")
-        break
-    else:
-        print("Invalid choice!\n")
+if __name__ == "__main__":
+    main()
